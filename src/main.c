@@ -1,7 +1,9 @@
+#include "oriPaths.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <stdint.h>
+#include <string.h>
 
 //Bitmap header is always 14 bytes in length. Keeping the struct packed is important due to this.
 //Header is required
@@ -42,36 +44,50 @@ typedef struct {
 } __attribute__((packed)) BMPExtraBitMasks4;
 
 typedef struct {
-	BMPHeader header;
-	BMPInfoHeader infoHeader;
-	uint8_t *colorBytes;
-} BMPImage24bitUC;
+	char *filePath;
+	void *imgBuffer;
+	BMPHeader *header;
+	BMPInfoHeader *infoHeader;
+	uint8_t *imageBytes;
+} BMPImage;
+
+BMPImage loadBMP(char *path) {
+	FILE *file = fopen(path, "rb");
+	if(file==NULL) {
+		printf("Couldn't open file :(");
+		return (BMPImage) {NULL};
+	}
+	fseek(file, 0L, SEEK_END);
+	long int size=ftell(file);
+	fseek(file, 0L, SEEK_SET);
+	void* imgBuffer=malloc(size);
+	fread(imgBuffer, size, 1, file);
+	BMPHeader *header=(BMPHeader*)imgBuffer;
+	BMPInfoHeader *infoHeader=(BMPInfoHeader*)(imgBuffer+sizeof(BMPHeader));
+	uint8_t *imageBytes=(uint8_t*)(imgBuffer+sizeof(BMPHeader)+sizeof(BMPInfoHeader));
+	return (BMPImage){path, imgBuffer, header, infoHeader, imageBytes};
+}
 
 int main() {
-	FILE* file=fopen("C:\\Users\\Oridubi\\Documents\\Programming\\ImageStuff\\test.bmp", "rb");
+	char exePath[50];	
+	getCurrentExePath(exePath, 50);
+	char* imgPath=alloca(strlen(exePath)+strlen(PS".."PS"test.bmp"));
+	strcpy(imgPath, exePath);
+	strcat(imgPath, PS".."PS"test.bmp");	
+	
+	printf("path: %s\n", imgPath);
+	FILE* file=fopen(imgPath, "rb");
 	if(file==NULL) {
 		printf("Did not open file");
 		return 1; 
 	}	
 	
-	unsigned long originalPos=ftell(file);
-	BMPHeader header;
-	BMPInfoHeader infoHeader;
-	fread(&header, sizeof(header), 1, file);
-	fread(&infoHeader, sizeof(infoHeader), 1, file);
-	fseek(file, 0, header.offset);
-	unsigned int sizeOfImage=header.fileSize-header.offset+1;
-	uint8_t *colorBytes=malloc(sizeOfImage);
-	fread(colorBytes, sizeOfImage, 1, file);
+	BMPImage imageTest=loadBMP(imgPath);
+
 	printf("[");
-	for(int i = 0; i<sizeOfImage/sizeof(uint8_t); i++) {
-		printf("%d, ", colorBytes[i]);
+	for(int i = 0; i<(imageTest.infoHeader->height*imageTest.infoHeader->width); i++) {
+		printf("%d, ", imageTest.imageBytes[i]);
 	}
 	printf("]\n");
-	printf("header offset: %d\n", header.offset);
-	printf("file size: %d\n", header.fileSize);
-	printf("info header width: %d\n", infoHeader.width);
-	printf("bytes per pixel: %d\n", infoHeader.bitsPerPixel/8);
-	printf("bytes total: %d\n", sizeOfImage);
 	return 0;
 }

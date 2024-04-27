@@ -6,5 +6,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/libstatic")
 set(CMAKE_BINARY_DIR "build")
 
-add_executable(main "src/main.c")
+add_executable(main "src/main.c" "src/oriPaths.c")
 target_include_directories(main PUBLIC "headers")
+target_link_libraries(main "-lshlwapi")
