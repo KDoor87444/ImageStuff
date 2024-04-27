@@ -64,7 +64,7 @@ BMPImage loadBMP(char *path) {
 	fread(imgBuffer, size, 1, file);
 	BMPHeader *header=(BMPHeader*)imgBuffer;
 	BMPInfoHeader *infoHeader=(BMPInfoHeader*)(imgBuffer+sizeof(BMPHeader));
-	uint8_t *imageBytes=(uint8_t*)(imgBuffer+sizeof(BMPHeader)+sizeof(BMPInfoHeader));
+	uint8_t *imageBytes=(uint8_t*)(imgBuffer+header->offset);
 	return (BMPImage){path, imgBuffer, header, infoHeader, imageBytes};
 }
 
